@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1920">
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #05070d;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #05070d;
+        font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: #f8fafc;
+      }
+
+      /* ---------- persistent background (survives every scene cut) ---------- */
+      .bg-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        will-change: transform, opacity;
+      }
+      #blob-a {
+        top: -180px;
+        left: -160px;
+        width: 620px;
+        height: 620px;
+        background: #2563eb;
+        filter: blur(160px);
+        opacity: 0.28;
+      }
+      #blob-b {
+        bottom: -220px;
+        right: -180px;
+        width: 700px;
+        height: 700px;
+        background: #22d3ee;
+        filter: blur(180px);
+        opacity: 0.22;
+      }
+
+      /* ---------- scenes ---------- */
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 90px;
+        overflow: hidden;
+        will-change: transform, opacity, filter;
+      }
+      #scene-hook {
+        z-index: 1;
+      }
+      #scene-problem {
+        z-index: 2;
+        opacity: 0;
+        align-items: flex-start;
+      }
+      #scene-solution {
+        z-index: 3;
+        opacity: 0;
+      }
+      #scene-closing {
+        z-index: 4;
+        opacity: 0;
+      }
+
+      /* ---------- scene 1: hook ---------- */
+      .hook-line {
+        opacity: 0;
+        text-align: center;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        font-size: 72px;
+        font-weight: 800;
+        line-height: 1.2;
+        will-change: transform, opacity;
+      }
+      #hook-l3 {
+        color: #22d3ee;
+      }
+
+      /* ---------- scene 2: problem ---------- */
+      .problem-list {
+        display: flex;
+        flex-direction: column;
+        gap: 48px;
+      }
+      .problem-line {
+        opacity: 0;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        will-change: transform, opacity, filter;
+      }
+      .problem-dot {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: #22d3ee;
+      }
+      .problem-text {
+        font-size: 64px;
+        font-weight: 800;
+        color: #f8fafc;
+      }
+
+      /* ---------- scene 3: solution ---------- */
+      .solution-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 64px;
+      }
+      #sol-title {
+        opacity: 0;
+        text-align: center;
+        font-size: 62px;
+        font-weight: 800;
+        will-change: transform, opacity;
+      }
+      #sol-title .accent {
+        color: #22d3ee;
+      }
+      .service-list {
+        display: flex;
+        flex-direction: column;
+        gap: 46px;
+      }
+      .service-card {
+        opacity: 0;
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        width: 100%;
+        will-change: transform, opacity;
+      }
+      .service-icon-wrap {
+        position: relative;
+        width: 104px;
+        height: 104px;
+        flex-shrink: 0;
+      }
+      .service-glow {
+        position: absolute;
+        inset: -30px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #22d3ee 0%, rgba(34, 211, 238, 0) 70%);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .service-icon {
+        position: relative;
+        z-index: 1;
+        width: 104px;
+        height: 104px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2563eb, #22d3ee);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .service-label {
+        font-size: 42px;
+        font-weight: 700;
+        line-height: 1.25;
+        color: #f8fafc;
+        max-width: 660px;
+      }
+
+      /* ---------- scene 4: closing ---------- */
+      #close-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 40px;
+        will-change: transform;
+      }
+      #close-brand {
+        opacity: 0;
+        text-align: center;
+        font-size: 80px;
+        font-weight: 800;
+        will-change: transform, opacity;
+      }
+      #close-brand .accent {
+        color: #2563eb;
+      }
+      #close-tagline {
+        opacity: 0;
+        text-align: center;
+        font-size: 48px;
+        font-weight: 700;
+        color: #22d3ee;
+        will-change: transform, opacity;
+      }
+      .cta-wrap {
+        position: relative;
+        margin-top: 12px;
+      }
+      .cta-glow {
+        position: absolute;
+        inset: -60px;
+        border-radius: 100px;
+        background: radial-gradient(ellipse, #2563eb 0%, rgba(37, 99, 235, 0) 70%);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      #close-cta {
+        position: relative;
+        z-index: 1;
+        opacity: 0;
+        padding: 26px 48px;
+        border-radius: 100px;
+        background: linear-gradient(135deg, #2563eb, #22d3ee);
+        font-size: 38px;
+        font-weight: 700;
+        color: #f8fafc;
+        text-align: center;
+        white-space: nowrap;
+        will-change: transform, opacity;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-mkgu" id="root" data-composition-id="code-repair-promo" data-start="0" data-duration="20" data-fps="30" data-width="1080" data-height="1920">
+      <div data-hf-id="hf-3hu8" class="bg-layer" data-layout-allow-overflow="true">
+        <div data-hf-id="hf-nrpc" class="blob" id="blob-a"></div>
+        <div data-hf-id="hf-yn6z" class="blob" id="blob-b"></div>
+      </div>
+
+      <!-- Scene 1: Hook (0 - ~3.4s) -->
+      <div data-hf-id="hf-n2vy" class="scene" id="scene-hook">
+        <div data-hf-id="hf-7hed" class="hook-line" id="hook-l1">¿Tu negocio</div>
+        <div data-hf-id="hf-ktji" class="hook-line" id="hook-l2">todavía lo manejas</div>
+        <div data-hf-id="hf-j71w" class="hook-line" id="hook-l3">a mano?</div>
+      </div>
+
+      <!-- Scene 2: Problem (~3.2 - ~7.4s) -->
+      <div data-hf-id="hf-pv1w" class="scene" id="scene-problem">
+        <div data-hf-id="hf-v8om" class="problem-list">
+          <div data-hf-id="hf-fuhd" class="problem-line" id="problem-1">
+            <div data-hf-id="hf-6bcv" class="problem-dot"></div>
+            <div data-hf-id="hf-38e3" class="problem-text">Desorden</div>
+          </div>
+          <div data-hf-id="hf-jsle" class="problem-line" id="problem-2">
+            <div data-hf-id="hf-kni7" class="problem-dot"></div>
+            <div data-hf-id="hf-eecr" class="problem-text">Pérdida de tiempo</div>
+          </div>
+          <div data-hf-id="hf-nqpf" class="problem-line" id="problem-3">
+            <div data-hf-id="hf-k976" class="problem-dot"></div>
+            <div data-hf-id="hf-kldn" class="problem-text">Ventas sin control</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scene 3: Solution (~7.2 - ~15.4s) -->
+      <div data-hf-id="hf-mqv6" class="scene" id="scene-solution">
+        <div data-hf-id="hf-oy0a" class="solution-stack">
+          <div data-hf-id="hf-rbsk" id="sol-title">Con <span data-hf-id="hf-153x" class="accent" id="sol-title-accent">Code Repair Tech</span></div>
+          <div data-hf-id="hf-tdp6" class="service-list">
+            <div data-hf-id="hf-cnsd" class="service-card" id="service-1">
+              <div data-hf-id="hf-xx9y" class="service-icon-wrap">
+                <div data-hf-id="hf-7gsy" class="service-glow" id="glow-1"></div>
+                <div data-hf-id="hf-9ebx" class="service-icon">
+                  <svg data-hf-id="hf-vz82" width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <path data-hf-id="hf-f006" d="M8.5 6L3 12l5.5 6M15.5 6L21 12l-5.5 6M13.5 4l-3 16" stroke="#F8FAFC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+              <div data-hf-id="hf-1kcx" class="service-label">Software a la medida</div>
+            </div>
+            <div data-hf-id="hf-glwe" class="service-card" id="service-2">
+              <div data-hf-id="hf-82ze" class="service-icon-wrap">
+                <div data-hf-id="hf-3iox" class="service-glow" id="glow-2"></div>
+                <div data-hf-id="hf-114x" class="service-icon">
+                  <svg data-hf-id="hf-xidy" width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <path data-hf-id="hf-f6t4" d="M6 2.5h9l3 3V21a.5.5 0 01-.5.5h-11a.5.5 0 01-.5-.5V3a.5.5 0 01.5-.5z" stroke="#F8FAFC" stroke-width="2" stroke-linejoin="round" />
+                    <path data-hf-id="hf-12ou" d="M15 2.5V6h3.5" stroke="#F8FAFC" stroke-width="2" stroke-linejoin="round" />
+                    <path data-hf-id="hf-vbi5" d="M8.5 11h7M8.5 14.5h7M8.5 18h4" stroke="#F8FAFC" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </div>
+              </div>
+              <div data-hf-id="hf-8j35" class="service-label">Sistemas de gestión y facturación</div>
+            </div>
+            <div data-hf-id="hf-kk0f" class="service-card" id="service-3">
+              <div data-hf-id="hf-8haf" class="service-icon-wrap">
+                <div data-hf-id="hf-2r14" class="service-glow" id="glow-3"></div>
+                <div data-hf-id="hf-2820" class="service-icon">
+                  <svg data-hf-id="hf-xwoz" width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <path data-hf-id="hf-ep84" d="M14.7 6.3a4 4 0 00-5.6 4.9L3 17.3V21h3.7l6.1-6.1a4 4 0 004.9-5.6l-2.6 2.6-2.1-.6-.6-2.1 2.3-2.9z" stroke="#F8FAFC" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+                  </svg>
+                </div>
+              </div>
+              <div data-hf-id="hf-pzl6" class="service-label">Soporte técnico y reparación</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scene 4: Closing (~15.2 - 20s) -->
+      <div data-hf-id="hf-8vzg" class="scene" id="scene-closing">
+        <div data-hf-id="hf-d89b" id="close-content">
+          <div data-hf-id="hf-41un" id="close-brand">Code Repair <span data-hf-id="hf-1o6q" class="accent" id="close-brand-accent">Tech</span></div>
+          <div data-hf-id="hf-9shc" id="close-tagline">Digitalizamos tu negocio</div>
+          <div data-hf-id="hf-466v" class="cta-wrap">
+            <div data-hf-id="hf-f4b2" class="cta-glow" id="cta-glow"></div>
+            <div data-hf-id="hf-h0yz" id="close-cta">Escríbenos: [WHATSAPP / CONTACTO]</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const F = 1 / 30; // one frame at 30fps, used for cascade overlaps
+
+      // ============================================================
+      // Persistent background — two blobs breathe continuously across
+      // all 20s so the "tech depth" layer never resets at a scene cut.
+      // (sine-wave-loop, onUpdate phase form — bounded, deterministic)
+      // ============================================================
+      const blobA = document.getElementById("blob-a");
+      const blobB = document.getElementById("blob-b");
+      const bgPhase = { p: 0 };
+      tl.to(
+        bgPhase,
+        {
+          p: Math.PI * 2 * 5.9,
+          duration: 20,
+          ease: "none",
+          onUpdate: () => {
+            const s1 = Math.sin(bgPhase.p);
+            const s2 = Math.sin(bgPhase.p + Math.PI / 2);
+            blobA.style.opacity = String(0.28 + s1 * 0.05);
+            blobA.style.transform = `scale(${1 + s1 * 0.02})`;
+            blobB.style.opacity = String(0.22 + s2 * 0.04);
+            blobB.style.transform = `scale(${1 + s2 * 0.015})`;
+          },
+        },
+        0,
+      );
+
+      // ============================================================
+      // Scene transitions — blur crossfade, one consistent primary
+      // transition for every cut (medium energy: 0.4s, power2).
+      // Outgoing + incoming animate at the SAME instant T; the
+      // transition IS the exit (no separate exit tweens on content).
+      // ============================================================
+      function blurCrossfade(oldSel, newSel, T) {
+        tl.to(oldSel, { filter: "blur(15px)", scale: 1.05, opacity: 0, duration: 0.4, ease: "power2.in" }, T);
+        tl.fromTo(
+          newSel,
+          { filter: "blur(15px)", scale: 0.95, opacity: 0 },
+          { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" },
+          T + 0.2,
+        );
+      }
+      blurCrossfade("#scene-hook", "#scene-problem", 3.0);
+      blurCrossfade("#scene-problem", "#scene-solution", 7.0);
+      blurCrossfade("#scene-solution", "#scene-closing", 15.0);
+
+      // Small deterministic keyword-emphasis pulse: a short scale
+      // yoyo the instant a keyword settles — motion, not just color.
+      function keywordPulse(sel, at) {
+        tl.fromTo(sel, { scale: 1 }, { scale: 1.08, duration: 0.17, ease: "power2.out", yoyo: true, repeat: 1 }, at);
+      }
+
+      // ============================================================
+      // Scene 1: Hook — waterfall word-group cascade (waterfall-entry)
+      // ============================================================
+      let t = 0.2;
+      tl.set("#hook-l1", { opacity: 1, y: 70 }, t);
+      tl.to("#hook-l1", { y: 0, duration: 0.18, ease: "power4.out" }, t);
+      t = t + 0.18 + 2 * F;
+      tl.set("#hook-l2", { opacity: 1, y: 45 }, t);
+      tl.to("#hook-l2", { y: 0, duration: 0.15, ease: "power4.out" }, t);
+      t = t + 0.15 - F;
+      tl.set("#hook-l3", { opacity: 1, y: 35 }, t);
+      tl.to("#hook-l3", { y: 0, duration: 0.13, ease: "power4.out" }, t);
+      const hookL3Land = t + 0.13;
+      keywordPulse("#hook-l3", hookL3Land);
+
+      // ============================================================
+      // Scene 2: Problem — kinetic-beat-slam (3 distinct attacks)
+      // ============================================================
+      tl.fromTo(
+        "#problem-1",
+        { scale: 1.5, filter: "blur(16px)", opacity: 0 },
+        { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.5, ease: "power4.out" },
+        3.3,
+      );
+      tl.fromTo(
+        "#problem-2",
+        { x: -320, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.45, ease: "expo.out" },
+        4.6,
+      );
+      tl.fromTo(
+        "#problem-3",
+        { y: 90, rotation: 6, opacity: 0 },
+        { y: 0, rotation: 0, opacity: 1, duration: 0.55, ease: "circ.out" },
+        5.9,
+      );
+
+      // ============================================================
+      // Scene 3: Solution — title pop, then a staggered card cascade
+      // ============================================================
+      tl.fromTo("#sol-title", { scale: 0.85, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" }, 7.6);
+      keywordPulse("#sol-title-accent", 8.1);
+
+      function serviceCard(cardSel, glowSel, at) {
+        tl.fromTo(cardSel, { y: 45, opacity: 0 }, { y: 0, opacity: 1, duration: 0.18, ease: "power4.out" }, at);
+        tl.fromTo(
+          glowSel,
+          { opacity: 0, scale: 0.85 },
+          { opacity: 0.22, scale: 1, duration: 0.5, ease: "power2.out" },
+          at,
+        );
+      }
+      serviceCard("#service-1", "#glow-1", 8.4);
+      serviceCard("#service-2", "#glow-2", 9.7);
+      serviceCard("#service-3", "#glow-3", 11.0);
+
+      // ============================================================
+      // Scene 4: Closing — brand pop, tagline rise, CTA + hero glow
+      // (the strongest focal point in the piece), final gentle hold.
+      // ============================================================
+      tl.fromTo("#close-brand", { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" }, 15.6);
+      keywordPulse("#close-brand-accent", 16.2);
+      tl.fromTo("#close-tagline", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power4.out" }, 16.3);
+
+      tl.fromTo(
+        "#cta-glow",
+        { opacity: 0, scale: 0.8 },
+        { opacity: 0.35, scale: 1, duration: 0.9, ease: "power2.out" },
+        16.6,
+      );
+      tl.fromTo("#close-cta", { scale: 0.85, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" }, 17.0);
+
+      // Final hold: one gentle, bounded breath so the last 2.4s of
+      // CTA hold reads alive rather than a frozen screenshot.
+      const closeContent = document.getElementById("close-content");
+      const holdPhase = { p: 0 };
+      tl.to(
+        holdPhase,
+        {
+          p: Math.PI * 2 * 1.1,
+          duration: 2.4,
+          ease: "none",
+          onUpdate: () => {
+            const s = Math.sin(holdPhase.p);
+            closeContent.style.transform = `translateY(${s * 2}px) scale(${1 + s * 0.01})`;
+          },
+        },
+        17.6,
+      );
+
+      window.__timelines["code-repair-promo"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

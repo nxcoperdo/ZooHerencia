@@ -1,0 +1,9 @@
+node_modules
+.DS_Store
+
+# HyperFrames CLI local cache/state (history, compiled preview bundle).
+.hyperframes/
+
+# Rendered video output and debug snapshots — regenerate with `npx hyperframes render`.
+out.mp4
+snapshots/
